@@ -14,37 +14,59 @@ class CreatePostViewController: UIViewController {
     
     var loadingView: UIView!
     
+    var loadingImageView: UIView!
+    
     @IBOutlet weak var titleInput: UITextField!
     @IBOutlet weak var bodyInput: UITextView!
+    @IBOutlet weak var imageView: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        buildLoadingView()
-        
-        setupView(with: .initial)
+        setupLoadingViews()
+        setupGestures()
         setupViewModel()
+        setupInitState()
     }
     
-    func buildLoadingView(){
-        let defaultFrame = CGRect(x: 0, y: 0, width: view.frame.width, height: view.frame.height)
+    func setupInitState() {
+        setupView(with: .initial)
+        setupImageView(with: .initial)
+        viewModel.getRandomImage()
+    }
+    
+    func setupLoadingViews() {
+        loadingView = setupLoading(for: self.view)
+        loadingImageView = setupLoading(for: self.imageView)
+    }
+    
+    func setupLoading(for parentView: UIView) -> UIView {
+        let defaultFrame = CGRect(x: 0, y: 0,
+                                  width: parentView.frame.width,
+                                  height: parentView.frame.height)
         
         let activityIndicator = UIActivityIndicatorView(style: .whiteLarge)
         activityIndicator.color = .darkGray
         activityIndicator.frame = defaultFrame
         
-        loadingView = UIView(frame: defaultFrame)
+        let loadingView = UIView(frame: defaultFrame)
         loadingView.backgroundColor = .white
         
         activityIndicator.center = loadingView.center
         loadingView.addSubview(activityIndicator)
         activityIndicator.startAnimating()
+        
+        return loadingView
     }
     
     func setupViewModel() {
         viewModel.updateUI = { [weak self] state in
             self?.setupView(with: state)
         }
+        
+        viewModel.updateImageUI = { [weak self] state in
+           self?.setupImageView(with: state)
+       }
     }
     
     func setupView(with state: CreatePostViewModel.ViewState) {
@@ -58,6 +80,23 @@ class CreatePostViewController: UIViewController {
         case .error:
             loadingView.removeFromSuperview()
             showAlert(message: "Error al crear Post")
+        }
+    }
+    
+    func setupImageView(with state: CreatePostViewModel.ViewState) {
+        switch state {
+        case .initial:
+            imageView.image = UIImage(named: "placeholder")
+        case .loading:
+            imageView.addSubview(loadingImageView)
+        case .success:
+            loadingImageView.removeFromSuperview()
+            if let data = viewModel.dataForImage {
+                imageView.image = UIImage(data: data)
+            }
+        case .error:
+            loadingImageView.removeFromSuperview()
+            imageView.image = UIImage(named: "placeholder")
         }
     }
     
@@ -79,5 +118,19 @@ class CreatePostViewController: UIViewController {
             let body = bodyInput.text,
             !title.isEmpty, !body.isEmpty else { return }
         viewModel.createPost(title: title, body: body)
+    }
+    
+    //  MARK: - Gestures
+    
+    func setupGestures() {
+        imageView.isUserInteractionEnabled = true
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleGestureView(_:)))
+        imageView.addGestureRecognizer(tapGesture)
+    }
+    
+    @objc func handleGestureView(_ sender: UITapGestureRecognizer) {
+        print("gesture here")
+        viewModel.getRandomImage()
     }
 }

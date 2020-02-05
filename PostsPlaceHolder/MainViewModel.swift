@@ -56,6 +56,8 @@ final class MainViewModel {
     }
     
     func didSearch(with text: String) {
+        guard viewState == .success else { return }
+        
         if text.isEmpty {
             posts = allPosts
         } else {

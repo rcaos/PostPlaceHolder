@@ -19,6 +19,12 @@ final class CreatePostViewModel {
     
     var updateUI: ((ViewState)-> Void)?
     
+    var updateImageUI: ((ViewState)-> Void)?
+    
+    let randomImageURL = "https://picsum.photos/200"
+    
+    var dataForImage: Data?
+    
     // MARK: - Initializers
     
     init( ) {
@@ -34,10 +40,27 @@ final class CreatePostViewModel {
             switch response.result {
             case .success:
                 guard let _ = response.data else { return }
-                //print("response data: [\(String(data: data, encoding: .utf8) )]")
                 strongSelf.viewState = .success
             case .failure:
                 strongSelf.viewState = .error
+            }
+        }
+    }
+    
+    func getRandomImage() {
+        updateImageUI?(.loading)
+        
+        AF.request(randomImageURL).validate().responseData { [weak self] response in
+            guard let strongSelf = self else { return }
+        
+            switch response.result {
+            case .success:
+                guard let data = response.data else { return }
+                strongSelf.dataForImage = data
+                strongSelf.updateImageUI?(.success)
+            case .failure:
+                strongSelf.dataForImage = nil
+                strongSelf.updateImageUI?(.error)
             }
         }
     }
