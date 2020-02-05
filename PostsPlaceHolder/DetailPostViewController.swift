@@ -35,10 +35,6 @@ class DetailPostViewController: UIViewController {
         viewModel.getPostDetail()
     }
     
-    func updateUI() {
-        
-    }
-    
     func setupView(with state: DetailPostViewModel.ViewState) {
         switch state {
         case .initial: break
