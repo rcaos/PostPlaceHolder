@@ -7,9 +7,10 @@
 //
 
 import UIKit
+import Kingfisher
 
 class CreatePostViewController: UIViewController {
-
+    
     var viewModel = CreatePostViewModel()
     
     var loadingView: UIView!
@@ -33,7 +34,7 @@ class CreatePostViewController: UIViewController {
     func setupInitState() {
         setupView(with: .initial)
         setupImageView(with: .initial)
-        viewModel.getRandomImage()
+        downloadImage()
     }
     
     func setupImageView() {
@@ -73,8 +74,8 @@ class CreatePostViewController: UIViewController {
         }
         
         viewModel.updateImageUI = { [weak self] state in
-           self?.setupImageView(with: state)
-       }
+            self?.setupImageView(with: state)
+        }
     }
     
     func setupView(with state: CreatePostViewModel.ViewState) {
@@ -112,10 +113,10 @@ class CreatePostViewController: UIViewController {
         let defaultAction = UIAlertAction(title: "OK",
                                           style: .default)
         let alert = UIAlertController(title: "Create Post",
-              message: message,
-              preferredStyle: .alert)
+                                      message: message,
+                                      preferredStyle: .alert)
         alert.addAction(defaultAction)
-             
+        
         self.present(alert, animated: true)
     }
     
@@ -138,7 +139,11 @@ class CreatePostViewController: UIViewController {
     }
     
     @objc func handleGestureView(_ sender: UITapGestureRecognizer) {
-        print("gesture here")
-        viewModel.getRandomImage()
+        downloadImage()
+    }
+    
+    func downloadImage() {
+        guard let randomUrl = viewModel.getRandomImageURL() else { return }
+        imageView.kf.setImage(with: randomUrl)
     }
 }

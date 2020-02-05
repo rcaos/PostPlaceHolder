@@ -21,7 +21,12 @@ final class CreatePostViewModel {
     
     var updateImageUI: ((ViewState)-> Void)?
     
-    let randomImageURL = "https://picsum.photos/200"
+    let randomImagesURL = ["https://i.picsum.photos/id/449/500/500.jpg",
+                           "https://i.picsum.photos/id/541/500/500.jpg",
+                           "https://i.picsum.photos/id/623/500/500.jpg",
+                           "https://i.picsum.photos/id/825/500/500.jpg",
+                           "https://i.picsum.photos/id/424/500/500.jpg",
+                           "https://i.picsum.photos/id/547/500/500.jpg"]
     
     var dataForImage: Data?
     
@@ -36,7 +41,7 @@ final class CreatePostViewModel {
         
         AF.request(request).responseJSON { [weak self] response in
             guard let strongSelf = self else { return }
-        
+            
             switch response.result {
             case .success:
                 guard let _ = response.data else { return }
@@ -46,23 +51,10 @@ final class CreatePostViewModel {
             }
         }
     }
-    
-    func getRandomImage() {
-        updateImageUI?(.loading)
-        
-        AF.request(randomImageURL).validate().responseData { [weak self] response in
-            guard let strongSelf = self else { return }
-        
-            switch response.result {
-            case .success:
-                guard let data = response.data else { return }
-                strongSelf.dataForImage = data
-                strongSelf.updateImageUI?(.success)
-            case .failure:
-                strongSelf.dataForImage = nil
-                strongSelf.updateImageUI?(.error)
-            }
-        }
+
+    func getRandomImageURL() -> URL? {
+        let index = Int.random(in: 0...(randomImagesURL.count-1))
+        return URL(string: randomImagesURL[index])
     }
 }
 

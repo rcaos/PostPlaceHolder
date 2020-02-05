@@ -65,7 +65,7 @@ public class Request {
 
     // MARK: - Initial State
 
-    /// `UUID` providing a unique identifier for the `Request`, used in the `Hashable` and `Equatable` conformances.
+    /// `UUID` prividing a unique identifier for the `Request`, used in the `Hashable` and `Equatable` conformances.
     public let id: UUID
     /// The serial queue for all internal async actions.
     public let underlyingQueue: DispatchQueue
@@ -111,11 +111,11 @@ public class Request {
         var metrics: [URLSessionTaskMetrics] = []
         /// Number of times any retriers provided retried the `Request`.
         var retryCount = 0
-        /// Final `AFError` for the `Request`, whether from various internal Alamofire calls or as a result of a `task`.
-        var error: AFError?
+        /// Final `Error` for the `Request`, whether from various internal Alamofire calls or as a result of a `task`.
+        var error: Error?
     }
 
-    /// Protected `MutableState` value that provides thread-safe access to state values.
+    /// Protected `MutableState` value that provides threadsafe access to state values.
     fileprivate let protectedMutableState: Protector<MutableState> = Protector(MutableState())
 
     /// `State` of the `Request`.
@@ -145,7 +145,6 @@ public class Request {
         get { return protectedMutableState.directValue.uploadProgressHandler }
         set { protectedMutableState.write { $0.uploadProgressHandler = newValue } }
     }
-
     /// `ProgressHandler` called when `downloadProgress` is updated, on the provided `DispatchQueue`.
     fileprivate var downloadProgressHandler: (handler: ProgressHandler, queue: DispatchQueue)? {
         get { return protectedMutableState.directValue.downloadProgressHandler }
@@ -234,7 +233,7 @@ public class Request {
     // MARK: Error
 
     /// `Error` returned from Alamofire internally, from the network request directly, or any validators executed.
-    public fileprivate(set) var error: AFError? {
+    fileprivate(set) public var error: Error? {
         get { return protectedMutableState.directValue.error }
         set { protectedMutableState.write { $0.error = newValue } }
     }
@@ -264,10 +263,9 @@ public class Request {
     }
 
     // MARK: - Internal Event API
-
     // All API must be called from underlyingQueue.
 
-    /// Called when an initial `URLRequest` has been created on behalf of the instance. If a `RequestAdapter` is active,
+    /// Called when a initial `URLRequest` has been created on behalf of the instance. If a `RequestAdapter` is active,
     /// the `URLRequest` will be adapted before being issued.
     ///
     /// - Parameter request: The `URLRequest` created.
@@ -281,8 +279,8 @@ public class Request {
     ///
     /// - Note: Triggers retry.
     ///
-    /// - Parameter error: `AFError` thrown from the failed creation.
-    func didFailToCreateURLRequest(with error: AFError) {
+    /// - Parameter error: `Error` thrown from the failed creation.
+    func didFailToCreateURLRequest(with error: Error) {
         self.error = error
 
         eventMonitor?.request(self, didFailToCreateURLRequestWithError: error)
@@ -309,8 +307,8 @@ public class Request {
     ///
     /// - Parameters:
     ///   - request: The `URLRequest` the adapter was called with.
-    ///   - error:   The `AFError` returned by the `RequestAdapter`.
-    func didFailToAdaptURLRequest(_ request: URLRequest, withError error: AFError) {
+    ///   - error:   The `Error` returned by the `RequestAdapter`.
+    func didFailToAdaptURLRequest(_ request: URLRequest, withError error: Error) {
         self.error = error
 
         eventMonitor?.request(self, didFailToAdaptURLRequest: request, withError: error)
@@ -399,8 +397,8 @@ public class Request {
     ///
     /// - Parameters:
     ///   - task:  The `URLSessionTask` which failed.
-    ///   - error: The early failure `AFError`.
-    func didFailTask(_ task: URLSessionTask, earlyWithError error: AFError) {
+    ///   - error: The early failure `Error`.
+    func didFailTask(_ task: URLSessionTask, earlyWithError error: Error) {
         self.error = error
 
         // Task will still complete, so didCompleteTask(_:with:) will handle retry.
@@ -413,9 +411,9 @@ public class Request {
     ///
     /// - Parameters:
     ///   - task:  The `URLSessionTask` which completed.
-    ///   - error: The `AFError` `task` may have completed with. If `error` has already been set on the instance, this
+    ///   - error: The `Error` `task` may have completed with. If `error` has already been set on the instance, this
     ///            value is ignored.
-    func didCompleteTask(_ task: URLSessionTask, with error: AFError?) {
+    func didCompleteTask(_ task: URLSessionTask, with error: Error?) {
         self.error = self.error ?? error
         protectedValidators.directValue.forEach { $0() }
 
@@ -436,16 +434,14 @@ public class Request {
     /// Called to determine whether retry will be triggered for the particular error, or whether the instance should
     /// call `finish()`.
     ///
-    /// - Parameter error: The possible `AFError` which may trigger retry.
-    func retryOrFinish(error: AFError?) {
+    /// - Parameter error: The possible `Error` which may trigger retry.
+    func retryOrFinish(error: Error?) {
         guard let error = error, let delegate = delegate else { finish(); return }
 
         delegate.retryResult(for: self, dueTo: error) { retryResult in
             switch retryResult {
-            case .doNotRetry:
-                self.finish()
-            case let .doNotRetryWithError(retryError):
-                self.finish(error: retryError.asAFError(orFailWith: "Received retryError was not already AFError"))
+            case .doNotRetry, .doNotRetryWithError:
+                self.finish(error: retryResult.error)
             case .retry, .retryWithDelay:
                 delegate.retryRequest(self, withDelay: retryResult.delay)
             }
@@ -455,7 +451,7 @@ public class Request {
     /// Finishes this `Request` and starts the response serializers.
     ///
     /// - Parameter error: The possible `Error` with which the instance will finish.
-    func finish(error: AFError? = nil) {
+    func finish(error: Error? = nil) {
         if let error = error { self.error = error }
 
         // Start response handlers
@@ -465,8 +461,6 @@ public class Request {
     }
 
     /// Appends the response serialization closure to the instance.
-    ///
-    ///  - Note: This method will also `resume` the instance if `delegate.startImmediately` returns `true`.
     ///
     /// - Parameter closure: The closure containing the response serialization call.
     func appendResponseSerializer(_ closure: @escaping () -> Void) {
@@ -479,10 +473,6 @@ public class Request {
 
             if mutableState.responseSerializerProcessingFinished {
                 underlyingQueue.async { self.processNextResponseSerializer() }
-            }
-
-            if mutableState.state.canTransitionTo(.resumed) {
-                underlyingQueue.async { if self.delegate?.startImmediately == true { self.resume() } }
             }
         }
     }
@@ -540,7 +530,7 @@ public class Request {
 
     /// Notifies the `Request` that the response serializer is complete.
     ///
-    /// - Parameter completion: The completion handler provided with the response serializer, called when all serializers
+    /// - Parameter completion: The completion handler provided with the response serilizer, called when all serializers
     ///                         are complete.
     func responseSerializerDidComplete(completion: @escaping () -> Void) {
         protectedMutableState.write { $0.responseSerializerCompletions.append(completion) }
@@ -602,7 +592,7 @@ public class Request {
     /// - Returns: The instance.
     @discardableResult
     public func cancel() -> Self {
-        protectedMutableState.write { mutableState in
+        protectedMutableState.write { (mutableState) in
             guard mutableState.state.canTransitionTo(.cancelled) else { return }
 
             mutableState.state = .cancelled
@@ -614,8 +604,6 @@ public class Request {
                 return
             }
 
-            // Resume to ensure metrics are gathered.
-            task.resume()
             task.cancel()
             underlyingQueue.async { self.didCancelTask(task) }
         }
@@ -628,7 +616,7 @@ public class Request {
     /// - Returns: The instance.
     @discardableResult
     public func suspend() -> Self {
-        protectedMutableState.write { mutableState in
+        protectedMutableState.write { (mutableState) in
             guard mutableState.state.canTransitionTo(.suspended) else { return }
 
             mutableState.state = .suspended
@@ -644,12 +632,13 @@ public class Request {
         return self
     }
 
+
     /// Resumes the instance.
     ///
     /// - Returns: The instance.
     @discardableResult
     public func resume() -> Self {
-        protectedMutableState.write { mutableState in
+        protectedMutableState.write { (mutableState) in
             guard mutableState.state.canTransitionTo(.resumed) else { return }
 
             mutableState.state = .resumed
@@ -787,8 +776,7 @@ public class Request {
     // MARK: Cleanup
 
     /// Final cleanup step executed when the instance finishes response serialization.
-    func cleanup() {
-        delegate?.cleanup(after: self)
+    open func cleanup() {
         // No-op: override in subclass
     }
 }
@@ -796,7 +784,7 @@ public class Request {
 // MARK: - Protocol Conformances
 
 extension Request: Equatable {
-    public static func ==(lhs: Request, rhs: Request) -> Bool {
+    public static func == (lhs: Request, rhs: Request) -> Bool {
         return lhs.id == rhs.id
     }
 }
@@ -837,11 +825,13 @@ extension Request {
         components.append("-X \(method)")
 
         if let credentialStorage = delegate?.sessionConfiguration.urlCredentialStorage {
-            let protectionSpace = URLProtectionSpace(host: host,
-                                                     port: url.port ?? 0,
-                                                     protocol: url.scheme,
-                                                     realm: host,
-                                                     authenticationMethod: NSURLAuthenticationMethodHTTPBasic)
+            let protectionSpace = URLProtectionSpace(
+                host: host,
+                port: url.port ?? 0,
+                protocol: url.scheme,
+                realm: host,
+                authenticationMethod: NSURLAuthenticationMethodHTTPBasic
+            )
 
             if let credentials = credentialStorage.credentials(for: protectionSpace)?.values {
                 for credential in credentials {
@@ -858,32 +848,34 @@ extension Request {
         if let configuration = delegate?.sessionConfiguration, configuration.httpShouldSetCookies {
             if
                 let cookieStorage = configuration.httpCookieStorage,
-                let cookies = cookieStorage.cookies(for: url), !cookies.isEmpty {
+                let cookies = cookieStorage.cookies(for: url), !cookies.isEmpty
+            {
                 let allCookies = cookies.map { "\($0.name)=\($0.value)" }.joined(separator: ";")
 
                 components.append("-b \"\(allCookies)\"")
             }
         }
 
-        var headers = HTTPHeaders()
+        var headers: [String: String] = [:]
 
-        if let sessionHeaders = delegate?.sessionConfiguration.headers {
-            for header in sessionHeaders where header.name != "Cookie" {
-                headers[header.name] = header.value
+        if let additionalHeaders = delegate?.sessionConfiguration.httpAdditionalHeaders as? [String: String] {
+            for (field, value) in additionalHeaders where field != "Cookie" {
+                headers[field] = value
             }
         }
 
-        for header in request.headers where header.name != "Cookie" {
-            headers[header.name] = header.value
+        if let headerFields = request.allHTTPHeaderFields {
+            for (field, value) in headerFields where field != "Cookie" {
+                headers[field] = value
+            }
         }
 
-        for header in headers {
-            let escapedValue = header.value.replacingOccurrences(of: "\"", with: "\\\"")
-            components.append("-H \"\(header.name): \(escapedValue)\"")
+        for (field, value) in headers {
+            let escapedValue = value.replacingOccurrences(of: "\"", with: "\\\"")
+            components.append("-H \"\(field): \(escapedValue)\"")
         }
 
-        if let httpBodyData = request.httpBody {
-            let httpBody = String(decoding: httpBodyData, as: UTF8.self)
+        if let httpBodyData = request.httpBody, let httpBody = String(data: httpBodyData, encoding: .utf8) {
             var escapedBody = httpBody.replacingOccurrences(of: "\\\"", with: "\\\\\"")
             escapedBody = escapedBody.replacingOccurrences(of: "\"", with: "\\\"")
 
@@ -901,21 +893,13 @@ public protocol RequestDelegate: AnyObject {
     /// `URLSessionConfiguration` used to create the underlying `URLSessionTask`s.
     var sessionConfiguration: URLSessionConfiguration { get }
 
-    /// Determines whether the `Request` should automatically call `resume()` when adding the first response handler.
-    var startImmediately: Bool { get }
-
-    /// Notifies the delegate the `Request` has reached a point where it needs cleanup.
-    ///
-    /// - Parameter request: The `Request` to cleanup after.
-    func cleanup(after request: Request)
-
     /// Asynchronously ask the delegate whether a `Request` will be retried.
     ///
     /// - Parameters:
     ///   - request:    `Request` which failed.
     ///   - error:      `Error` which produced the failure.
     ///   - completion: Closure taking the `RetryResult` for evaluation.
-    func retryResult(for request: Request, dueTo error: AFError, completion: @escaping (RetryResult) -> Void)
+    func retryResult(for request: Request, dueTo error: Error, completion: @escaping (RetryResult) -> Void)
 
     /// Asynchronously retry the `Request`.
     ///
@@ -1018,7 +1002,7 @@ public class DataRequest: Request {
 
             let result = validation(self.request, response, self.data)
 
-            if case let .failure(error) = result { self.error = error.asAFError(or: .responseValidationFailed(reason: .customValidationFailed(error: error))) }
+            if case .failure(let error) = result { self.error = error }
 
             self.eventMonitor?.request(self,
                                        didValidateRequest: self.request,
@@ -1088,7 +1072,7 @@ public class DownloadRequest: Request {
     /// `Alamofire_` to the automatically generated download name and moves it within the temporary directory. Files
     /// with this destination must be additionally moved if they should survive the system reclamation of temporary
     /// space.
-    static let defaultDestination: Destination = { url, _ in
+    static let defaultDestination: Destination = { (url, _) in
         let filename = "Alamofire_\(url.lastPathComponent)"
         let destination = url.deletingLastPathComponent().appendingPathComponent(filename)
 
@@ -1175,13 +1159,13 @@ public class DownloadRequest: Request {
     ///
     /// - Parameters:
     ///   - task:   `URLSessionTask` that finished the download.
-    ///   - result: `Result` of the automatic move to `destination`.
-    func didFinishDownloading(using task: URLSessionTask, with result: Result<URL, AFError>) {
+    ///   - result: `AFResult` of the automatic move to `destination`.
+    func didFinishDownloading(using task: URLSessionTask, with result: AFResult<URL>) {
         eventMonitor?.request(self, didFinishDownloadingUsing: task, with: result)
 
         switch result {
-        case let .success(url): protectedDownloadMutableState.write { $0.fileURL = url }
-        case let .failure(error): self.error = error
+        case .success(let url): protectedDownloadMutableState.write { $0.fileURL = url }
+        case .failure(let error): self.error = error
         }
     }
 
@@ -1232,7 +1216,7 @@ public class DownloadRequest: Request {
     /// - Returns: The instance.
     @discardableResult
     public func cancel(producingResumeData shouldProduceResumeData: Bool) -> Self {
-        return cancel(optionallyProducingResumeData: shouldProduceResumeData ? { _ in } : nil)
+        return cancel(optionallyProducingResumeData: (shouldProduceResumeData) ? { _ in } : nil)
     }
 
     /// Cancels the instance while producing resume data. Once cancelled, a `DownloadRequest` can no longer be resumed
@@ -1258,7 +1242,7 @@ public class DownloadRequest: Request {
     ///
     /// - Returns:                     The instance.
     private func cancel(optionallyProducingResumeData completionHandler: ((_ resumeData: Data?) -> Void)?) -> Self {
-        protectedMutableState.write { mutableState in
+        protectedMutableState.write { (mutableState) in
             guard mutableState.state.canTransitionTo(.cancelled) else { return }
 
             mutableState.state = .cancelled
@@ -1271,16 +1255,12 @@ public class DownloadRequest: Request {
             }
 
             if let completionHandler = completionHandler {
-                // Resume to ensure metrics are gathered.
-                task.resume()
-                task.cancel { resumeData in
+                task.cancel { (resumeData) in
                     self.protectedDownloadMutableState.write { $0.resumeData = resumeData }
                     self.underlyingQueue.async { self.didCancelTask(task) }
                     completionHandler(resumeData)
                 }
             } else {
-                // Resume to ensure metrics are gathered.
-                task.resume()
                 task.cancel()
                 self.underlyingQueue.async { self.didCancelTask(task) }
             }
@@ -1303,7 +1283,7 @@ public class DownloadRequest: Request {
 
             let result = validation(self.request, response, self.fileURL)
 
-            if case let .failure(error) = result { self.error = error.asAFError(or: .responseValidationFailed(reason: .customValidationFailed(error: error))) }
+            if case .failure(let error) = result { self.error = error }
 
             self.eventMonitor?.request(self,
                                        didValidateRequest: self.request,
@@ -1338,10 +1318,6 @@ public class UploadRequest: DataRequest {
     /// The `UploadableConvertible` value used to produce the `Uploadable` value for this instance.
     public let upload: UploadableConvertible
 
-    /// `FileManager` used to perform cleanup tasks, including the removal of multipart form encoded payloads written
-    /// to disk.
-    public let fileManager: FileManager
-
     // MARK: Mutable State
 
     /// `Uploadable` value used by the instance.
@@ -1364,10 +1340,8 @@ public class UploadRequest: DataRequest {
          serializationQueue: DispatchQueue,
          eventMonitor: EventMonitor?,
          interceptor: RequestInterceptor?,
-         fileManager: FileManager,
          delegate: RequestDelegate) {
-        upload = convertible
-        self.fileManager = fileManager
+        self.upload = convertible
 
         super.init(id: id,
                    convertible: convertible,
@@ -1389,8 +1363,8 @@ public class UploadRequest: DataRequest {
 
     /// Called when the `Uploadable` value could not be created.
     ///
-    /// - Parameter error: `AFError` produced by the failure.
-    func didFailToCreateUploadable(with error: AFError) {
+    /// - Parameter error: `Error` produced by the failure.
+    func didFailToCreateUploadable(with error: Error) {
         self.error = error
 
         eventMonitor?.request(self, didFailToCreateUploadableWithError: error)
@@ -1430,7 +1404,7 @@ public class UploadRequest: DataRequest {
     }
 
     public override func cleanup() {
-        defer { super.cleanup() }
+        super.cleanup()
 
         guard
             let uploadable = self.uploadable,
@@ -1438,7 +1412,8 @@ public class UploadRequest: DataRequest {
             shouldRemove
         else { return }
 
-        try? fileManager.removeItem(at: url)
+        // TODO: Abstract file manager
+        try? FileManager.default.removeItem(at: url)
     }
 }
 
@@ -1456,6 +1431,5 @@ extension UploadRequest.Uploadable: UploadableConvertible {
         return self
     }
 }
-
 /// A type that can be converted to an upload, whether from an `UploadRequest.Uploadable` or `URLRequestConvertible`.
-public protocol UploadConvertible: UploadableConvertible & URLRequestConvertible {}
+public protocol UploadConvertible: UploadableConvertible & URLRequestConvertible { }

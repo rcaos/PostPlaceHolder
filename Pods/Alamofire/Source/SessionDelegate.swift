@@ -67,7 +67,7 @@ extension SessionDelegate: URLSessionDelegate {
 
 extension SessionDelegate: URLSessionTaskDelegate {
     /// Result of a `URLAuthenticationChallenge` evaluation.
-    typealias ChallengeEvaluation = (disposition: URLSession.AuthChallengeDisposition, credential: URLCredential?, error: AFError?)
+    typealias ChallengeEvaluation = (disposition: URLSession.AuthChallengeDisposition, credential: URLCredential?, error: Error?)
 
     open func urlSession(_ session: URLSession,
                          task: URLSessionTask,
@@ -79,8 +79,8 @@ extension SessionDelegate: URLSessionTaskDelegate {
         switch challenge.protectionSpace.authenticationMethod {
         case NSURLAuthenticationMethodServerTrust:
             evaluation = attemptServerTrustAuthentication(with: challenge)
-        case NSURLAuthenticationMethodHTTPBasic, NSURLAuthenticationMethodHTTPDigest, NSURLAuthenticationMethodNTLM, NSURLAuthenticationMethodNegotiate:
-            evaluation = attemptCredentialAuthentication(for: challenge, belongingTo: task)
+        case NSURLAuthenticationMethodHTTPBasic, NSURLAuthenticationMethodHTTPDigest:
+            evaluation = attemptHTTPAuthentication(for: challenge, belongingTo: task)
         // case NSURLAuthenticationMethodClientCertificate:
         // Alamofire doesn't currently support client certificate validation.
         default:
@@ -104,8 +104,8 @@ extension SessionDelegate: URLSessionTaskDelegate {
 
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
             let trust = challenge.protectionSpace.serverTrust
-        else {
-            return (.performDefaultHandling, nil, nil)
+            else {
+                return (.performDefaultHandling, nil, nil)
         }
 
         do {
@@ -117,19 +117,19 @@ extension SessionDelegate: URLSessionTaskDelegate {
 
             return (.useCredential, URLCredential(trust: trust), nil)
         } catch {
-            return (.cancelAuthenticationChallenge, nil, error.asAFError(or: .serverTrustEvaluationFailed(reason: .customEvaluationFailed(error: error))))
+            return (.cancelAuthenticationChallenge, nil, error)
         }
     }
 
-    /// Evaluates the credential-based authentication `URLAuthenticationChallenge` received for `task`.
+    /// Evaluates the HTTP authentication `URLAuthenticationChallenge` received for `task`.
     ///
     /// - Parameters:
     ///   - challenge: The `URLAuthenticationChallenge`.
     ///   - task:      The `URLSessionTask` which received the challenge.
     ///
     /// - Returns:     The `ChallengeEvaluation`.
-    func attemptCredentialAuthentication(for challenge: URLAuthenticationChallenge,
-                                         belongingTo task: URLSessionTask) -> ChallengeEvaluation {
+    func attemptHTTPAuthentication(for challenge: URLAuthenticationChallenge,
+                                   belongingTo task: URLSessionTask) -> ChallengeEvaluation {
         guard challenge.previousFailureCount == 0 else {
             return (.rejectProtectionSpace, nil, nil)
         }
@@ -153,7 +153,7 @@ extension SessionDelegate: URLSessionTaskDelegate {
                                  totalBytesExpectedToSend: totalBytesExpectedToSend)
 
         stateProvider?.request(for: task)?.updateUploadProgress(totalBytesSent: totalBytesSent,
-                                                                totalBytesExpectedToSend: totalBytesExpectedToSend)
+                                                   totalBytesExpectedToSend: totalBytesExpectedToSend)
     }
 
     open func urlSession(_ session: URLSession,
@@ -193,7 +193,7 @@ extension SessionDelegate: URLSessionTaskDelegate {
     open func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         eventMonitor?.urlSession(session, task: task, didCompleteWithError: error)
 
-        stateProvider?.request(for: task)?.didCompleteTask(task, with: error.map { $0.asAFError(or: .sessionTaskFailed(error: $0)) })
+        stateProvider?.request(for: task)?.didCompleteTask(task, with: error)
 
         stateProvider?.didCompleteTask(task)
     }
@@ -299,7 +299,7 @@ extension SessionDelegate: URLSessionDownloadDelegate {
 
             request.didFinishDownloading(using: downloadTask, with: .success(destination))
         } catch {
-            request.didFinishDownloading(using: downloadTask, with: .failure(.downloadedFileMoveFailed(error: error, source: location, destination: destination)))
+            request.didFinishDownloading(using: downloadTask, with: .failure(error))
         }
     }
 }

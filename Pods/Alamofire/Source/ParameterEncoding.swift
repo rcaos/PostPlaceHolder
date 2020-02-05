@@ -57,6 +57,7 @@ public protocol ParameterEncoding {
 /// `BoolEncoding` can be used to configure how boolean values are encoded. The default behavior is to encode
 /// `true` as 1 and `false` as 0.
 public struct URLEncoding: ParameterEncoding {
+
     // MARK: Helper Types
 
     /// Defines whether the url-encoded query string is applied to the existing query string or HTTP body of the
@@ -73,8 +74,8 @@ public struct URLEncoding: ParameterEncoding {
         func encodesParametersInURL(for method: HTTPMethod) -> Bool {
             switch self {
             case .methodDependent: return [.get, .head, .delete].contains(method)
-            case .queryString: return true
-            case .httpBody: return false
+            case .queryString:     return true
+            case .httpBody:        return false
             }
         }
     }
@@ -236,6 +237,7 @@ public struct URLEncoding: ParameterEncoding {
 /// Uses `JSONSerialization` to create a JSON representation of the parameters object, which is set as the body of the
 /// request. The `Content-Type` HTTP header field of an encoded request is set to `application/json`.
 public struct JSONEncoding: ParameterEncoding {
+
     // MARK: Properties
 
     /// Returns a `JSONEncoding` instance with default writing options.
