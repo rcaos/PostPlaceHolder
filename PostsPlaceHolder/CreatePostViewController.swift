@@ -23,6 +23,7 @@ class CreatePostViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupImageView()
         setupLoadingViews()
         setupGestures()
         setupViewModel()
@@ -33,6 +34,13 @@ class CreatePostViewController: UIViewController {
         setupView(with: .initial)
         setupImageView(with: .initial)
         viewModel.getRandomImage()
+    }
+    
+    func setupImageView() {
+        imageView.layer.cornerRadius = imageView.frame.size.width / 2
+        imageView.layer.borderWidth = 0.1
+        imageView.layer.borderColor = UIColor.gray.cgColor
+        imageView.clipsToBounds = true
     }
     
     func setupLoadingViews() {
