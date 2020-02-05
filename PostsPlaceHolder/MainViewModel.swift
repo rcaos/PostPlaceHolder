@@ -11,6 +11,7 @@ import Alamofire
 
 final class MainViewModel {
     
+    var allPosts: [Post]
     var posts: [Post]
     
     var viewState: ViewState = .initial {
@@ -21,10 +22,11 @@ final class MainViewModel {
     
     var updateUI: ((ViewState)-> Void)?
     
-    // MARK: - Initializersx
+    // MARK: - Initializers
     
     init( ) {
         posts = []
+        allPosts = []
     }
     
     func getPosts() {
@@ -49,7 +51,19 @@ final class MainViewModel {
     
     func processPosts(with response: [Post]) {
         print("fetched: \(response.count) posts. ")
+        allPosts = response
         posts = response
+    }
+    
+    func didSearch(with text: String) {
+        if text.isEmpty {
+            posts = allPosts
+        } else {
+            posts = allPosts.filter({
+                $0.body.contains(text.lowercased())
+            })
+        }
+        viewState = .success
     }
     
     func buildDetailModel(for index: Int) -> DetailPostViewModel {

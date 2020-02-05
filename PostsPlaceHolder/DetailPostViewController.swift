@@ -46,7 +46,7 @@ class DetailPostViewController: UIViewController {
             bodyText.text = viewModel?.body
         case .error:
             loadingView.removeFromSuperview()
-            showAlert(message: "Error al crear Post")
+            showAlert(message: "Error al Consultar Detalle")
         }
     }
     
