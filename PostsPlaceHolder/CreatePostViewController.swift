@@ -26,12 +26,6 @@ class CreatePostViewController: UIViewController {
         setupViewModel()
     }
     
-    @IBAction func submitPost(_ sender: Any) {
-        guard let title = titleInput.text, let body = bodyInput.text else { return }
-        viewModel.createPost(title: title, body: body)
-        
-    }
-    
     func buildLoadingView(){
         let defaultFrame = CGRect(x: 0, y: 0, width: view.frame.width, height: view.frame.height)
         
@@ -76,5 +70,14 @@ class CreatePostViewController: UIViewController {
         alert.addAction(defaultAction)
              
         self.present(alert, animated: true)
+    }
+    
+    // MARK: - Actions
+    
+    @IBAction func submitPost(_ sender: Any) {
+        guard let title = titleInput.text,
+            let body = bodyInput.text,
+            !title.isEmpty, !body.isEmpty else { return }
+        viewModel.createPost(title: title, body: body)
     }
 }

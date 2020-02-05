@@ -26,16 +26,15 @@ final class CreatePostViewModel {
     
     func createPost(title: String, body: String) {
         viewState = .loading
-        
         let request = PostProvider.createPost(title, body, 51).urlRequest
         
-        Alamofire.request(request).responseJSON { [weak self] response in
+        AF.request(request).responseJSON { [weak self] response in
             guard let strongSelf = self else { return }
         
             switch response.result {
             case .success:
-                guard let data = response.data else { return }
-                print("response data: [\(String(data: data, encoding: .utf8) )]")
+                guard let _ = response.data else { return }
+                //print("response data: [\(String(data: data, encoding: .utf8) )]")
                 strongSelf.viewState = .success
             case .failure:
                 strongSelf.viewState = .error

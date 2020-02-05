@@ -37,26 +37,15 @@ final class DetailPostViewModel {
     func getPostDetail() {
         print("Loading Detail Post...")
         viewState = .loading
-        let request = "https://jsonplaceholder.typicode.com/posts/\(identifier)"
+        let request = PostProvider.getPostDetail(identifier).urlRequest
         
-        Alamofire.request(request).validate().responseJSON { [weak self] response in
+        AF.request(request).validate().responseDecodable(of: Post.self) { [weak self] response in
             guard let strongSelf = self else { return }
-        
+            
             switch response.result {
-            case .success:
-                guard let data = response.data else { return }
-                
-                let decoder = JSONDecoder()
-                do {
-                    let resp = try decoder.decode(Post.self, from: data)
-                    strongSelf.processPosts(with: resp)
-                    strongSelf.viewState = .success
-                }
-                catch {
-                    print("error to Decode: [\(error)]")
-                    strongSelf.viewState = .error
-                }
-                
+            case .success(let postResponse):
+                strongSelf.processPosts(with: postResponse)
+                strongSelf.viewState = .success
             case .failure(let error):
                 print(error)
                 strongSelf.viewState = .error
