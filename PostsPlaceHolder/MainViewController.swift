@@ -8,6 +8,8 @@
 
 import UIKit
 
+import RxSwift
+
 class MainViewController: UIViewController {
     
     var viewModel = MainViewModel()
@@ -17,13 +19,14 @@ class MainViewController: UIViewController {
     let identifierCell = "identifierCell"
     let segueDetail = "detailSegue"
     
+    var disposeBag = DisposeBag()
+    
     private var searchController = UISearchController(searchResultsController: nil)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupSearchController()
-        setupTable()
         setupLoadingView()
         setupViewModel()
     }
@@ -38,11 +41,6 @@ class MainViewController: UIViewController {
         searchController.searchBar.autoresizingMask = [.flexibleWidth]
         navigationItem.titleView = searchController.searchBar
         definesPresentationContext = true
-    }
-    
-    func setupTable() {
-        tableView.dataSource = self
-        tableView.delegate = self
     }
     
     func setupLoadingView(){
@@ -62,13 +60,28 @@ class MainViewController: UIViewController {
     
     func setupViewModel() {
         
-        viewModel.updateUI = { [weak self] state in
-            self?.setupView(with: state)
+        viewModel.rxPostsObservable
+            .bind(to: self.tableView.rx.items(cellIdentifier: identifierCell, cellType: UITableViewCell.self)) { _, element, cell in
+                cell.textLabel?.text = String(element.id)
+                cell.detailTextLabel?.text = element.body
         }
+        .disposed(by: disposeBag)
+        
+//        tableView.rx.modelSelected(Post.self).subscribe(onNext: { value in
+//            print("value selected: [\(value)]")
+//        }).disposed(by: disposeBag)
+        
+        tableView.rx.itemSelected.subscribe(onNext: { [weak self] index in
+            guard let strongSelf = self else { return }
+            strongSelf.tableView.deselectRow(at: index, animated: true)
+            strongSelf.performSegue(withIdentifier: strongSelf.segueDetail, sender: index.row)
+        }).disposed(by: disposeBag)
         
         viewModel.getPosts()
     }
     
+    // MARK: - TODO
+    // Manejar States con rxSwift, .loading, .error, etc
     func setupView(with state: MainViewModel.ViewState) {
         switch state {
         case .initial: break
@@ -102,34 +115,6 @@ class MainViewController: UIViewController {
                 let controllerTo = segue.destination as? DetailPostViewController else { return }
             controllerTo.viewModel = viewModel.buildDetailModel(for: index)
         }
-    }
-}
-
-// MARK: - UITableViewDataSource
-
-extension MainViewController: UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.posts.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: identifierCell, for: indexPath)
-        
-        cell.textLabel?.text = String( viewModel.posts[indexPath.row].id )
-        cell.detailTextLabel?.text = viewModel.posts[indexPath.row].body
-        
-        return cell
-    }
-}
-
-// MARK: - UITableViewDelegate
-
-extension MainViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        performSegue(withIdentifier: segueDetail, sender: indexPath.row)
     }
 }
 

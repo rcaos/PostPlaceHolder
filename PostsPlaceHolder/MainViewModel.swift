@@ -9,10 +9,10 @@
 import Foundation
 import Alamofire
 
+import RxSwift
+import RxCocoa
+
 final class MainViewModel {
-    
-    var allPosts: [Post]
-    var posts: [Post]
     
     var viewState: ViewState = .initial {
         didSet {
@@ -22,11 +22,16 @@ final class MainViewModel {
     
     var updateUI: ((ViewState)-> Void)?
     
+    let rxAllPosts: BehaviorRelay<[Post]> = BehaviorRelay(value: [])    //RxCocoa Type
+    
+    var rxPosts: BehaviorRelay<[Post]> = BehaviorRelay(value: [])
+    var rxPostsObservable: Observable<[Post]> {
+        return rxPosts.asObservable()
+    }
+    
     // MARK: - Initializers
     
     init( ) {
-        posts = []
-        allPosts = []
     }
     
     func getPosts() {
@@ -51,25 +56,28 @@ final class MainViewModel {
     
     func processPosts(with response: [Post]) {
         print("fetched: \(response.count) posts. ")
-        allPosts = response
-        posts = response
+        
+        //Acepta evento y Emite a sus Subscriptores!
+        rxAllPosts.accept(response)
+        rxPosts.accept(response)
     }
     
     func didSearch(with text: String) {
         guard viewState == .success else { return }
         
         if text.isEmpty {
-            posts = allPosts
+            rxPosts.accept( rxAllPosts.value )
         } else {
-            posts = allPosts.filter({
+            let filterPosts = rxAllPosts.value.filter({
                 $0.body.contains(text.lowercased())
             })
+            rxPosts.accept(filterPosts)
         }
         viewState = .success
     }
     
     func buildDetailModel(for index: Int) -> DetailPostViewModel {
-        return DetailPostViewModel(identifier: posts[index].id)
+        return DetailPostViewModel(identifier: rxPosts.value[index].id)
     }
 }
 
