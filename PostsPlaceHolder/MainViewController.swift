@@ -7,14 +7,16 @@
 //
 
 import UIKit
-
 import RxSwift
 
-class MainViewController: UIViewController {
+class MainViewController: UIViewController, StoryboardInstantiable {
     
-    var viewModel = MainViewModel()
+    private var viewModel: MainViewModel!
+    private var mainViewControllersFactory: MainViewControllersFactory!
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var createButton: UIButton!
+    
     var loadingView: UIView!
     let identifierCell = "identifierCell"
     let segueDetail = "detailSegue"
@@ -22,6 +24,16 @@ class MainViewController: UIViewController {
     var disposeBag = DisposeBag()
     
     private var searchController = UISearchController(searchResultsController: nil)
+    
+    static func create(with viewModel: MainViewModel,
+                       mainViewControllersFactory: MainViewControllersFactory) -> MainViewController {
+        let controller = MainViewController.instantiateViewController()
+        controller.viewModel = viewModel
+        controller.mainViewControllersFactory = mainViewControllersFactory
+        return controller
+    }
+    
+    // MARK: - Life Cycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -74,8 +86,16 @@ class MainViewController: UIViewController {
         tableView.rx.itemSelected.subscribe(onNext: { [weak self] index in
             guard let strongSelf = self else { return }
             strongSelf.tableView.deselectRow(at: index, animated: true)
-            strongSelf.performSegue(withIdentifier: strongSelf.segueDetail, sender: index.row)
+            strongSelf.viewModel.didSelectPost(with: index.row)
         }).disposed(by: disposeBag)
+        
+        viewModel.route = { [weak self] route in
+            self?.handle(route)
+        }
+        
+        createButton.rx.tap.bind { [weak self] in
+            self?.viewModel.didCreatePost()
+        }.disposed(by: disposeBag)
         
         viewModel.getPosts()
     }
@@ -97,24 +117,12 @@ class MainViewController: UIViewController {
     }
     
     func showAlert(message: String) {
-        let defaultAction = UIAlertAction(title: "OK",
-                                          style: .default)
+        let defaultAction = UIAlertAction(title: "OK", style: .default)
         let alert = UIAlertController(title: "Consultando Posts",
                                       message: message,
                                       preferredStyle: .alert)
         alert.addAction(defaultAction)
-        
         self.present(alert, animated: true)
-    }
-    
-    // MARK: - Navigation
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == segueDetail {
-            guard let index =  sender as? Int,
-                let controllerTo = segue.destination as? DetailPostViewController else { return }
-            controllerTo.viewModel = viewModel.buildDetailModel(for: index)
-        }
     }
 }
 
@@ -130,3 +138,34 @@ extension MainViewController: UISearchBarDelegate {
         viewModel.didSearch(with: searchText)
     }
 }
+
+// MARK: - Navigation
+
+extension MainViewController {
+    
+    func handle(_ route: MainViewModelRoute) {
+        switch route {
+        case .initial:  break
+            
+        case .showMovieDetail(let identifier):
+            let detailVC = mainViewControllersFactory.makePostDetailViewController(identifier: identifier)
+            navigationController?.pushViewController(detailVC, animated: true)
+            
+        case .showCreatePost:
+            let createVC = mainViewControllersFactory.makeCreateViewController()
+            navigationController?.pushViewController(createVC, animated: true)
+        }
+    }
+}
+
+// MARK: - MainViewControllersFactory
+
+protocol MainViewControllersFactory {
+    
+    func makeMainViewController() -> UIViewController
+    
+    func makePostDetailViewController(identifier: Int) -> UIViewController
+    
+    func makeCreateViewController() -> UIViewController
+}
+

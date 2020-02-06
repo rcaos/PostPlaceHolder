@@ -29,6 +29,8 @@ final class MainViewModel {
         return rxPosts.asObservable()
     }
     
+    var route: ((MainViewModelRoute)-> Void)?
+    
     // MARK: - Initializers
     
     init( ) {
@@ -36,6 +38,7 @@ final class MainViewModel {
     
     func getPosts() {
         viewState = .loading
+        
         
         let request = PostProvider.getAllPost.urlRequest
         
@@ -76,10 +79,25 @@ final class MainViewModel {
         viewState = .success
     }
     
-    func buildDetailModel(for index: Int) -> DetailPostViewModel {
-        return DetailPostViewModel(identifier: rxPosts.value[index].id)
+    func didSelectPost(with index: Int) {
+        let identifier = rxPosts.value[index].id
+        route?( .showMovieDetail(identifier: identifier) )
+    }
+    
+    func didCreatePost() {
+        route?(  .showCreatePost )
     }
 }
+
+// MARK: - Navigation
+
+enum MainViewModelRoute {
+    case initial
+    case showMovieDetail(identifier: Int)
+    case showCreatePost
+}
+
+// MARK: - State
 
 extension MainViewModel {
     

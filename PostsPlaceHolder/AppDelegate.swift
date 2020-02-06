@@ -13,18 +13,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     
-    var storyBoard: UIStoryboard!
+    let appDIContainer = AppDIContainer()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        storyBoard = UIStoryboard(name: "Main", bundle: nil)
-
-        guard let viewController = storyBoard.instantiateInitialViewController() else {
-            fatalError()
-        }
-
         window = UIWindow(frame: UIScreen.main.bounds)
-        window?.rootViewController = viewController
+        
+        let mainViewController = appDIContainer.makeMainSceneDIContainer().makeMainViewController()
+        window?.rootViewController = UINavigationController(rootViewController: mainViewController)
+
         window?.makeKeyAndVisible()
         
         return true

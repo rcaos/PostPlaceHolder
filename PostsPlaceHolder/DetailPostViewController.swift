@@ -8,21 +8,24 @@
 
 import UIKit
 
-class DetailPostViewController: UIViewController {
+class DetailPostViewController: UIViewController, StoryboardInstantiable {
 
+    var viewModel: DetailPostViewModel!
+    
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var bodyText: UITextView!
     var loadingView: UIView!
     
-    var viewModel: DetailPostViewModel? {
-        didSet {
-            setupViewModel()
-        }
+    static func create(with viewModel: DetailPostViewModel) -> DetailPostViewController {
+        let controller = DetailPostViewController.instantiateViewController()
+        controller.viewModel = viewModel
+        return controller
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         buildLoadingView()
+        setupViewModel()
     }
     
     func setupViewModel() {

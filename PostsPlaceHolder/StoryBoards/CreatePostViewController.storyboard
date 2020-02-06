@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15705" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BkZ-Ru-bbk">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15706"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Create Post View Controller-->
+        <scene sceneID="mxG-F8-bsi">
+            <objects>
+                <viewController id="BkZ-Ru-bbk" customClass="CreatePostViewController" customModule="PostsPlaceHolder" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="p1U-Qp-aut">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="W5t-6u-usO">
+                                <rect key="frame" x="107" y="52" width="200" height="200"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="W5t-6u-usO" secondAttribute="height" multiplier="1:1" id="7mD-Ph-Zil"/>
+                                    <constraint firstAttribute="height" constant="200" id="b9m-KP-ebW"/>
+                                </constraints>
+                            </imageView>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" text="default Body" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="oGZ-1o-00w">
+                                <rect key="frame" x="8" y="302" width="398" height="200"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="200" id="rwW-3o-JtH"/>
+                                </constraints>
+                                <color key="textColor" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VcH-Ya-bLf">
+                                <rect key="frame" x="8" y="510" width="398" height="30"/>
+                                <state key="normal" title="Create Post"/>
+                                <connections>
+                                    <action selector="submitPost:" destination="BkZ-Ru-bbk" eventType="touchUpInside" id="tZp-PY-uBm"/>
+                                </connections>
+                            </button>
+                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Title Post" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="N4y-L7-An9">
+                                <rect key="frame" x="8" y="260" width="398" height="34"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <constraints>
+                            <constraint firstItem="VcH-Ya-bLf" firstAttribute="leading" secondItem="Qof-BU-fAp" secondAttribute="leading" constant="8" id="3fL-Kv-oxW"/>
+                            <constraint firstItem="W5t-6u-usO" firstAttribute="top" secondItem="Qof-BU-fAp" secondAttribute="top" constant="8" id="FxC-aZ-UO3"/>
+                            <constraint firstItem="VcH-Ya-bLf" firstAttribute="top" secondItem="oGZ-1o-00w" secondAttribute="bottom" constant="8" id="GOE-g3-L9P"/>
+                            <constraint firstItem="N4y-L7-An9" firstAttribute="top" secondItem="W5t-6u-usO" secondAttribute="bottom" constant="8" id="LQv-5N-smA"/>
+                            <constraint firstItem="oGZ-1o-00w" firstAttribute="top" secondItem="N4y-L7-An9" secondAttribute="bottom" constant="8" id="M2U-E7-4Ph"/>
+                            <constraint firstItem="W5t-6u-usO" firstAttribute="centerX" secondItem="p1U-Qp-aut" secondAttribute="centerX" id="MFw-cP-pMH"/>
+                            <constraint firstItem="oGZ-1o-00w" firstAttribute="leading" secondItem="Qof-BU-fAp" secondAttribute="leading" constant="8" id="Wm2-gf-1iW"/>
+                            <constraint firstItem="Qof-BU-fAp" firstAttribute="trailing" secondItem="oGZ-1o-00w" secondAttribute="trailing" constant="8" id="brc-t9-orC"/>
+                            <constraint firstItem="Qof-BU-fAp" firstAttribute="trailing" secondItem="VcH-Ya-bLf" secondAttribute="trailing" constant="8" id="jwg-cq-QZW"/>
+                            <constraint firstItem="Qof-BU-fAp" firstAttribute="trailing" secondItem="N4y-L7-An9" secondAttribute="trailing" constant="8" id="kVw-wN-XfD"/>
+                            <constraint firstItem="N4y-L7-An9" firstAttribute="leading" secondItem="Qof-BU-fAp" secondAttribute="leading" constant="8" id="mCe-wv-wnH"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="Qof-BU-fAp"/>
+                    </view>
+                    <connections>
+                        <outlet property="bodyInput" destination="oGZ-1o-00w" id="Ijt-Fk-F1N"/>
+                        <outlet property="imageView" destination="W5t-6u-usO" id="m4Z-CC-soX"/>
+                        <outlet property="titleInput" destination="N4y-L7-An9" id="ZBM-Gf-dyV"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="otD-MK-pyT" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="51" y="38"/>
+        </scene>
+    </scenes>
+</document>

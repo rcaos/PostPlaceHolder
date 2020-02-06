@@ -9,17 +9,22 @@
 import UIKit
 import Kingfisher
 
-class CreatePostViewController: UIViewController {
+class CreatePostViewController: UIViewController, StoryboardInstantiable {
     
-    var viewModel = CreatePostViewModel()
+    var viewModel: CreatePostViewModel!
     
     var loadingView: UIView!
-    
     var loadingImageView: UIView!
     
     @IBOutlet weak var titleInput: UITextField!
     @IBOutlet weak var bodyInput: UITextView!
     @IBOutlet weak var imageView: UIImageView!
+    
+    static func create(with viewModel: CreatePostViewModel) -> CreatePostViewController {
+        let controller = CreatePostViewController.instantiateViewController()
+        controller.viewModel = viewModel
+        return controller
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
