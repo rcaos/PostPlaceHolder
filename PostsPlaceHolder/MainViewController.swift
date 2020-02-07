@@ -8,28 +8,28 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
+import RxFlow
 
 class MainViewController: UIViewController, StoryboardInstantiable {
     
-    private var viewModel: MainViewModel!
-    private var mainViewControllersFactory: MainViewControllersFactory!
+    var viewModel: MainViewModel!
+    
+    let steps = PublishRelay<Step>()    // from Stepper protocol
     
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var createButton: UIButton!
     
     var loadingView: UIView!
     let identifierCell = "identifierCell"
-    let segueDetail = "detailSegue"
     
     var disposeBag = DisposeBag()
     
     private var searchController = UISearchController(searchResultsController: nil)
     
-    static func create(with viewModel: MainViewModel,
-                       mainViewControllersFactory: MainViewControllersFactory) -> MainViewController {
+    static func create(with viewModel: MainViewModel) -> MainViewController {
         let controller = MainViewController.instantiateViewController()
         controller.viewModel = viewModel
-        controller.mainViewControllersFactory = mainViewControllersFactory
         return controller
     }
     
@@ -89,12 +89,9 @@ class MainViewController: UIViewController, StoryboardInstantiable {
             strongSelf.viewModel.didSelectPost(with: index.row)
         }).disposed(by: disposeBag)
         
-        viewModel.route = { [weak self] route in
-            self?.handle(route)
-        }
-        
         createButton.rx.tap.bind { [weak self] in
-            self?.viewModel.didCreatePost()
+            // En este caso no necesita irse al VM, le informo al Flow
+            self?.create()
         }.disposed(by: disposeBag)
         
         viewModel.getPosts()
@@ -141,31 +138,9 @@ extension MainViewController: UISearchBarDelegate {
 
 // MARK: - Navigation
 
-extension MainViewController {
+extension MainViewController: Stepper {
     
-    func handle(_ route: MainViewModelRoute) {
-        switch route {
-        case .initial:  break
-            
-        case .showMovieDetail(let identifier):
-            let detailVC = mainViewControllersFactory.makePostDetailViewController(identifier: identifier)
-            navigationController?.pushViewController(detailVC, animated: true)
-            
-        case .showCreatePost:
-            let createVC = mainViewControllersFactory.makeCreateViewController()
-            navigationController?.pushViewController(createVC, animated: true)
-        }
+    private func create() {
+        self.steps.accept(AppStep.createPostAreRequired)
     }
 }
-
-// MARK: - MainViewControllersFactory
-
-protocol MainViewControllersFactory {
-    
-    func makeMainViewController() -> UIViewController
-    
-    func makePostDetailViewController(identifier: Int) -> UIViewController
-    
-    func makeCreateViewController() -> UIViewController
-}
-

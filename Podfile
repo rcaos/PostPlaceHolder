@@ -8,5 +8,6 @@ target 'PostsPlaceHolder' do
     
     pod 'RxSwift', '5.0.0'
     pod 'RxCocoa', '5.0.0'
+    pod 'RxFlow', '2.7.0'
     
 end

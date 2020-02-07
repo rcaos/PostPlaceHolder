@@ -12,8 +12,12 @@ import Alamofire
 import RxSwift
 import RxCocoa
 
-final class MainViewModel {
+import RxFlow
+
+final class MainViewModel: Stepper {
     
+    var steps = PublishRelay<Step>()    // from Stepper protocol
+     
     var viewState: ViewState = .initial {
         didSet {
             updateUI?(viewState)
@@ -29,8 +33,6 @@ final class MainViewModel {
         return rxPosts.asObservable()
     }
     
-    var route: ((MainViewModelRoute)-> Void)?
-    
     // MARK: - Initializers
     
     init( ) {
@@ -38,8 +40,6 @@ final class MainViewModel {
     
     func getPosts() {
         viewState = .loading
-        
-        
         let request = PostProvider.getAllPost.urlRequest
         
         AF.request(request).responseDecodable(of: [Post].self) { [weak self] response in
@@ -81,20 +81,9 @@ final class MainViewModel {
     
     func didSelectPost(with index: Int) {
         let identifier = rxPosts.value[index].id
-        route?( .showMovieDetail(identifier: identifier) )
+        
+        self.steps.accept( AppStep.postIsPicked(withId: identifier) )
     }
-    
-    func didCreatePost() {
-        route?(  .showCreatePost )
-    }
-}
-
-// MARK: - Navigation
-
-enum MainViewModelRoute {
-    case initial
-    case showMovieDetail(identifier: Int)
-    case showCreatePost
 }
 
 // MARK: - State

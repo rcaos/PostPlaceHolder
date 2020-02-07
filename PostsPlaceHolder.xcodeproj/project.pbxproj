@@ -7,11 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		77F4859C23EC471B00713A09 /* AppDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F4859B23EC471B00713A09 /* AppDIContainer.swift */; };
-		77F4859E23EC476500713A09 /* MainSceneDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F4859D23EC476500713A09 /* MainSceneDIContainer.swift */; };
+		7730844723EDCCA40053B463 /* AppStepper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7730844623EDCCA40053B463 /* AppStepper.swift */; };
 		77F485A123EC482900713A09 /* StoryboardInstantiable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F485A023EC482900713A09 /* StoryboardInstantiable.swift */; };
 		77F485A923EC5AE900713A09 /* DetailPostViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 77F485A823EC5AE900713A09 /* DetailPostViewController.storyboard */; };
 		77F485AB23EC5B7600713A09 /* CreatePostViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 77F485AA23EC5B7600713A09 /* CreatePostViewController.storyboard */; };
+		77F4865E23ECC09A00713A09 /* AppFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F4865D23ECC09A00713A09 /* AppFlow.swift */; };
+		77F4866023ECC12400713A09 /* AppStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F4865F23ECC12400713A09 /* AppStep.swift */; };
 		7C3E955FC7216C2CCBB3B055 /* Pods_PostsPlaceHolder.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66FA23A2EE3F3DCFBBC5AD02 /* Pods_PostsPlaceHolder.framework */; };
 		DF1F74B023EA07B200366388 /* CreatePostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF1F74AF23EA07B200366388 /* CreatePostViewController.swift */; };
 		DF1F74B223EA07BF00366388 /* CreatePostViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF1F74B123EA07BF00366388 /* CreatePostViewModel.swift */; };
@@ -41,11 +42,12 @@
 
 /* Begin PBXFileReference section */
 		66FA23A2EE3F3DCFBBC5AD02 /* Pods_PostsPlaceHolder.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PostsPlaceHolder.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		77F4859B23EC471B00713A09 /* AppDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainer.swift; sourceTree = "<group>"; };
-		77F4859D23EC476500713A09 /* MainSceneDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSceneDIContainer.swift; sourceTree = "<group>"; };
+		7730844623EDCCA40053B463 /* AppStepper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStepper.swift; sourceTree = "<group>"; };
 		77F485A023EC482900713A09 /* StoryboardInstantiable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryboardInstantiable.swift; sourceTree = "<group>"; };
 		77F485A823EC5AE900713A09 /* DetailPostViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = DetailPostViewController.storyboard; sourceTree = "<group>"; };
 		77F485AA23EC5B7600713A09 /* CreatePostViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = CreatePostViewController.storyboard; sourceTree = "<group>"; };
+		77F4865D23ECC09A00713A09 /* AppFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlow.swift; sourceTree = "<group>"; };
+		77F4865F23ECC12400713A09 /* AppStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStep.swift; sourceTree = "<group>"; };
 		D6051AFC3FB6B17FC1C0724A /* Pods-PostsPlaceHolder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PostsPlaceHolder.release.xcconfig"; path = "Target Support Files/Pods-PostsPlaceHolder/Pods-PostsPlaceHolder.release.xcconfig"; sourceTree = "<group>"; };
 		DF1F74AF23EA07B200366388 /* CreatePostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostViewController.swift; sourceTree = "<group>"; };
 		DF1F74B123EA07BF00366388 /* CreatePostViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostViewModel.swift; sourceTree = "<group>"; };
@@ -90,8 +92,9 @@
 		77F4859F23EC47F300713A09 /* DIContainers */ = {
 			isa = PBXGroup;
 			children = (
-				77F4859B23EC471B00713A09 /* AppDIContainer.swift */,
-				77F4859D23EC476500713A09 /* MainSceneDIContainer.swift */,
+				77F4865D23ECC09A00713A09 /* AppFlow.swift */,
+				7730844623EDCCA40053B463 /* AppStepper.swift */,
+				77F4865F23ECC12400713A09 /* AppStep.swift */,
 			);
 			path = DIContainers;
 			sourceTree = "<group>";
@@ -346,17 +349,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				77F4859C23EC471B00713A09 /* AppDIContainer.swift in Sources */,
 				DF87BAA623E9DDD0008A7B8E /* MainViewController.swift in Sources */,
 				DF1F74B423EA1D4600366388 /* DetailPostViewModel.swift in Sources */,
 				DF87BAA223E9DDD0008A7B8E /* AppDelegate.swift in Sources */,
-				77F4859E23EC476500713A09 /* MainSceneDIContainer.swift in Sources */,
 				DF1F74B223EA07BF00366388 /* CreatePostViewModel.swift in Sources */,
 				DF87BAC923E9E4CA008A7B8E /* EndPoint.swift in Sources */,
+				77F4865E23ECC09A00713A09 /* AppFlow.swift in Sources */,
 				DF87BACE23E9E524008A7B8E /* PostProvider.swift in Sources */,
+				77F4866023ECC12400713A09 /* AppStep.swift in Sources */,
 				DF87BAC423E9DE8C008A7B8E /* MainViewModel.swift in Sources */,
 				DF87BAC623E9E417008A7B8E /* Post.swift in Sources */,
 				DF1F74B023EA07B200366388 /* CreatePostViewController.swift in Sources */,
+				7730844723EDCCA40053B463 /* AppStepper.swift in Sources */,
 				DF1F74B623EA1D5800366388 /* DetailPostViewController.swift in Sources */,
 				77F485A123EC482900713A09 /* StoryboardInstantiable.swift in Sources */,
 			);
